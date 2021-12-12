@@ -7,7 +7,9 @@ import core.faceDetect as faceDetect
 import queue
 import multiprocessing
 import pathlib
+import os
 import argparse
+from elevate import elevate
 from intuitus_nn import Framebuffer
 
 imageSize = 384
@@ -15,8 +17,6 @@ imageSize = 384
 
 def _create_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--descriptor_file', type=str,
-                        default='./saved_descriptors', help='path to descriptor file')
     parser.add_argument('--threshold', type=float, default=0.6,
                         help='Threshold of euclidean distance to distinguish persons.')
     parser.add_argument('--max_angle', type=float, default=4.0,
@@ -26,14 +26,16 @@ def _create_parser():
     parser.add_argument(
         '--cam_url', type=str,
         default="http://10.0.0.241/zm/cgi-bin/nph-zms?mode=jpeg&monitor=2&maxfps=5&scale=100&user=admin&pass=admin")
+    parser.add_argument('--descriptor_file', type=str,
+                        default='./descriptors', help='path to descriptor file')
     parser.add_argument('--intuitusCommandPath', type=str,
-                        default="./intuitus_commands/384",
+                        default="./zybo/face-commands",
                         help="path to intuitus commands")
     parser.add_argument('--landmarkPredictor', type=str,
-                        default="../dlib_models/shape_predictor_68_face_landmarks.dat",
+                        default="./dlib_models/shape_predictor_68_face_landmarks.dat",
                         help="path to dlib 68 face landmark model")
     parser.add_argument('--faceDescriptor', type=str,
-                        default="../dlib_models/dlib_face_recognition_resnet_model_v1.dat",
+                        default="./dlib_models/dlib_face_recognition_resnet_model_v1.dat",
                         help="path to dlib face recognition resnet model v1")
 
     return parser.parse_args()
@@ -45,7 +47,7 @@ class StateMachine():
                  maxAngle: float = 4.0, MaxMovement=50.0, showLandmarks: bool = False) -> None:
 
         predictor = dlib.shape_predictor(predictorPath)
-        detector = faceDetect.Detector(DetectorCommandPath, imgSize, 0.1, 0.5, 0.3)
+        detector = faceDetect.Detector(DetectorCommandPath, imgSize, 0.03, 0.5, 0.08)
 
         self.__decriptorHandler = utils.Descriptor_FileHandler(descriptorFilePath, threshold)
 
@@ -59,6 +61,7 @@ class StateMachine():
         self.__imgPos = np.zeros((4), dtype=np.int32)
         self.__name = "processing.."
         self.__faceDetected = False
+        self.__processingDesc = False
         self.__score = 0.0
         self.__maxMissDetection = 2
         self.__missDetections = 0
@@ -69,8 +72,7 @@ class StateMachine():
         self.__faceRecQueueIn = multiprocessing.Queue(maxsize=3)
         self.__faceRecQueueOut = multiprocessing.Queue(maxsize=3)
 
-        self.__ImageWorker = utils.Image_loader(self.__imgQueue, url, imgSize,
-                                                maxFps)
+        self.__ImageWorker = utils.Image_loader(self.__imgQueue, url, imgSize)
         self.__DetectionWorker = utils.Detector(self.__imgQueue, self.__detectQueue,
                                                 detector, predictor)
 
@@ -93,13 +95,14 @@ class StateMachine():
         self.__name == "processing.."
         self.__faceDetected = False
         self.__score = 0.0
-
-        if self.__faceRecQueueOut.empty():
-            self.__FaceRecWorker.kill()
-            self.__FaceRecWorker()
-            return
-        # If Output Queue is not empty -> Face descriptor computations are done --> discard the face descriptor in the Queue
-        _ = self.__faceRecQueueOut.get()
+        if self.__processingDesc:
+            if self.__faceRecQueueOut.empty():
+                self.__FaceRecWorker.kill()
+                self.__FaceRecWorker()
+                return
+            # If Output Queue is not empty -> Face descriptor computations are done --> discard the face descriptor in the Queue
+            _ = self.__faceRecQueueOut.get()
+            self.__processingDesc = False
         return
 
     def ___waitForFace(self, key) -> np.ndarray:
@@ -133,6 +136,7 @@ class StateMachine():
             return img
 
         # start Computation of face descriptor
+        self.__processingDesc = True
         self.__faceRecQueueIn.put((shapes, img))
 
         # draw rectangle
@@ -199,8 +203,8 @@ class StateMachine():
         elif nLeftRight and (rot_angle > (-self.__ReqHeadRot)):
             outtext = "Rotate your head RIGHT. Current rot angle: " + str(rot_angle)
             utils.write_text_bottom(img, outtext, (255, 255, 100))
-            cv2.arrowedLine(img, (self.__imgSize-30, int(self.__imgSize/2)-5),
-                            (self.__imgSize, int(self.__imgSize/2)),
+            cv2.arrowedLine(img, (self.__imgSize-30, int(self.__imgSize/2)),
+                            (self.__imgSize-5, int(self.__imgSize/2)),
                             (255, 255, 100), 3)
         else:
             outtext = "Good"
@@ -245,7 +249,7 @@ class StateMachine():
             return img
 
         if self.__faceDetected:
-            outtext = self.__name + " detected with {}\% confidence.".format(self.__score)
+            outtext = self.__name + " detected with {}% confidence.".format(self.__score)
             utils.write_text_bottom(img, outtext, (0, 255, 0))
         else:
             if self.__faceRecQueueOut.empty():
@@ -253,6 +257,7 @@ class StateMachine():
                 utils.write_text_bottom(img, outtext, (255, 0, 0))
             else:
                 faceDescriptor = self.__faceRecQueueOut.get()
+                self.__processingDesc = False
                 self.__faceDetected, self.__name = self.__decriptorHandler.exists(faceDescriptor)
                 self.__score = 99.38  # dlib face recognition accuracy
 
@@ -266,15 +271,18 @@ class StateMachine():
 
 
 def main(opt):
+    # get root permissions (Required to access device drivers)
+    if os.getuid() != 0:
+        try: elevate() # get root privileges. Required to open kernel driver 
+        except: raise Exception("Root permission denied")        
     # Initialize framebuffer
     fb = Framebuffer('/dev/fb0')
     screen_size = fb.get_screensize()
+    print(screen_size)
     black_screen = np.zeros([screen_size[0], screen_size[1], 3], dtype=np.uint8)
     fb.show(black_screen, 0)
     fbOffsetCenter = int(
-        (screen_size[1] * (screen_size[1]-imageSize)/2 + (screen_size[1]-imageSize)/2)*3)
-
-    # Initialize face detector
+        (screen_size[1] * (screen_size[0]-imageSize)/2 + (screen_size[1]-imageSize)/2)*3)
 
     # Start state machine
     stm = StateMachine(opt.cam_url, opt.intuitusCommandPath, opt.landmarkPredictor, opt.faceDescriptor,
@@ -283,6 +291,7 @@ def main(opt):
 
     # Setup keyboard thread
     keyboardInput = utils.KeyInput()
+    keyboardInput()
     key = keyboardInput.getKeyboardInput()
 
     while(True):
