@@ -130,4 +130,6 @@ dmypy.json
 .vscode
 dlib_models
 saved_descriptors
-Documentation/Report/svg-inkscape
+descriptors
+zybo/face-commands
+zybo/face-commands

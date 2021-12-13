@@ -1,5 +1,5 @@
 import numpy as np
-
+import pathlib
 import intuitus_nn as nn
 
 
@@ -142,6 +142,7 @@ def yolov3_tiny_config():
 
 
 def configure_Network(command_path, input_size):
+    command_path = pathlib.Path(command_path).absolute()
     Net = nn.Sequential(command_path)
     buffer = Net.input(3, input_size, input_size)
 
@@ -190,7 +191,7 @@ class YoloLayer():
         self.anchor_vec = self.anchors / self.stride
         self.anchor_wh = self.anchor_vec.reshape(1, self.na, 1, 1, 2)
         self.grid = None
-        print("na {}, no {}, ny {}, nx {}".format(self.na, self.no, self.nx, self.nx))
+        #print("na {}, no {}, ny {}, nx {}".format(self.na, self.no, self.nx, self.nx))
 
     def create_grids(self, ng=(13, 13)):
         self.ny, self.nx = ng  # y and x grid size
@@ -236,9 +237,9 @@ class Detector():
         self.score = score
 
     def __call__(self, fmapIn):
-        fmap_out = self.Net(fmapIn)
-        pred_lb = self.Yolo_lb(fmap_out[0][:30, ...]*self.resultScale)
-        pred_mb = self.Yolo_mb(fmap_out[1][:30, ...]*self.resultScale)
+        fmapOut = self.Net(fmapIn)
+        pred_lb = self.Yolo_lb(fmapOut[0][:30, ...]*self.resultScale)
+        pred_mb = self.Yolo_mb(fmapOut[1][:30, ...]*self.resultScale)
         inf_out = np.concatenate((pred_lb, pred_mb), axis=0)
         boxes, pred_conf, classes = filter_boxes(inf_out, self.confThreshold)
         if not boxes.shape[0]:
@@ -247,5 +248,5 @@ class Detector():
                           score=self.score, method='merge')
         if not best_bboxes.shape[0]:
             return np.zeros([0, 4])
-        return best_bboxes
+        return best_bboxes[:,:4].astype(np.int32)
     

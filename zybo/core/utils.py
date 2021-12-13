@@ -181,8 +181,7 @@ class Image_loader(Worker):
     def _process(self):
         while(True):
             #print(self.__class__.__name__ + ": fetching image.")
-            start = timeit.default_timer()
-            ret, frame = self.ipCamRead()
+            frame = self.ipCamRead()
             img, ratio, pad = letterbox(frame, (self.image_size, self.image_size),
                                                auto=False, scaleup=True)
             b,g,r = cv2.split(img)
@@ -212,6 +211,7 @@ class Detector(Worker):
         self.in_Queue = in_Queue
         self.out_Queue = out_Queue
         self.detector = detector
+        #self.detector = dlib.get_frontal_face_detector()
         self.predictor = predictor
 
     def _process(self):
@@ -229,17 +229,33 @@ class Detector(Worker):
             self.out_Queue.put(faces)
             #print(self.__class__.__name__ + ": done.")
 
+    # def _process(self):
+    #     while(True):
+    #         #print(self.__class__.__name__ + ": detecting faces.")
+    #         img,fmapIn = self.in_Queue.get()
+    #         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    #         rects = self.detector(gray, 1)
+    #         shapes = []
+    #         rect_np = []
+    #         for rect in rects:
+    #             shapes.append(self.predictor(gray, rect))
+    #             rect_np.append(rect_to_np(rect, dtpye=np.int32))
+
+    #         rect_np = np.stack(rect_np)
+    #         faces = (rect_np, shapes, img)
+    #         self.out_Queue.put(faces)
 
 
 class KeyInput(Worker):
-    def __init__(self, maxQueueSize : int = 5):
+    def __init__(self, maxQueueSize : int = 1):
         super().__init__()
         self.queue = queue.Queue(maxsize=maxQueueSize)
         self.key = '0'
     def _process(self):
         while(True):
             inString = input("End Application: [q]").strip()
-            self.queueOut.put(inString)
+            print("New Keybord input: " + inString)
+            self.queue.put(inString)
     def getKeyboardInput(self,block=False,timeout=None) -> str:
         try: 
             self.key = self.queue.get(block,timeout)
@@ -252,16 +268,14 @@ class KeyInput(Worker):
 def computeFaceDescriptors(queueIn: multiprocessing.Queue, queueOut: multiprocessing.Queue, facerecPath):
     facerec = dlib.face_recognition_model_v1(facerecPath)
     while(True):
-        print("wait for queue entry")
         shapes, img = queueIn.get()
-        print("start processing face descriptor")
+        #print("start processing face descriptor")
+        #time = timeit.default_timer()
         face_descriptors = []
         for shape in shapes:
             face_descriptors.append(
                 facerec.compute_face_descriptor(img, shape))
-        print("Face decriptor processing done.")
-        time.sleep(5)
-        print("Put face decriptor in output queue.")
+        #print("Face decriptor processing done. Took {} s".format(timeit.default_timer()-time))
         queueOut.put(face_descriptors)
 
 class FaceDecriptorProcess():
