@@ -1,16 +1,16 @@
 \documentclass[%
-	a4paper,
-	twoside,
-	openany,
-	dvipsnames
+a4paper,
+twoside,
+openany,
+dvipsnames
 ]
-{book}
+{report}
 %
 %----------------------------------------------------------------------------
 %
 % Title
 %
-\title{FPGA Based Embedded Neural Network Object Detector}
+\title{Real time face verification using a Zynq-7000-20 FPGA}
 %
 %----------------------------------------------------------------------------
 %
@@ -28,22 +28,22 @@
 %
 % Supervisor(s)
 %
-\newcommand{\supervisor}{Univ.Prof. Dipl.-Ing. Dr.techn. Axel  Jantsch}
+\newcommand{\supervisor}{Assistant Prof. Nima Taherinejad , PhD}
 %
 %----------------------------------------------------------------------------
 %
 % Submission Date
 %
-\newcommand{\submissiondate}{27.10.2021}
+\newcommand{\submissiondate}{20.12.2021}
 
 %
 % ----------------------------------------------------------------------------
 %
 % Uncomment only one of the following depending on your type of document:
 %
-%\newcommand{\doctype}{REPORT}
+\newcommand{\doctype}{REPORT}
 %\newcommand{\doctype}{DISSERTATION}
-\newcommand{\doctype}{MASTERTHESIS}
+%\newcommand{\doctype}{MASTERTHESIS}
 %\newcommand{\doctype}{BACHELORTHESIS}
 %
 %-----------------------------------------------------------------------------
@@ -328,8 +328,8 @@
 %:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 \newglossary[slg]{symbolslist}{syi}{syg}{Symbols}
 %
-\input{../sources/tex/front-matter/Acronyms.tex}
-\input{../sources/tex/front-matter/Symbols.tex}
+\input{../sources/Acronyms.tex}
+\input{../sources/Symbols.tex}
 %
 \makeglossaries
 \makeindex
@@ -338,100 +338,78 @@
 % Document body
 %
 \begin{document}
-\selectlanguage{english}
-%
-%----------------------------------------------------------------------------
-%
-% Select title page
-%
-\ifthenelse{\equal{\doctype}{REPORT}}{\input{titlepages/report.tex}}{}
-\ifthenelse{\equal{\doctype}{DISSERTATION}}{\input{titlepages/doctor.tex}}{}
-\ifthenelse{\equal{\doctype}{MASTERTHESIS}}{\input{titlepages/master.tex}}{}
-\ifthenelse{\equal{\doctype}{BACHELORTHESIS}}{\input{titlepages/bachelor.tex}}{}
+	\selectlanguage{english}
+	%
+	%----------------------------------------------------------------------------
+	%
+	% Select title page
+	%
+	\ifthenelse{\equal{\doctype}{REPORT}}{\input{titlepages/report.tex}}{}
+	\ifthenelse{\equal{\doctype}{DISSERTATION}}{\input{titlepages/doctor.tex}}{}
+	\ifthenelse{\equal{\doctype}{MASTERTHESIS}}{\input{titlepages/master.tex}}{}
+		
+	\tableofcontents
+	\listoffigures 
+	\listoftables
+	\printglossary[type=symbolslist]							% List of symbols
+	\printglossary[type=\acronymtype]
+	
+	%
+	%----------------------------------------------------------------------------
+	%############################################################################
+	\pagebreak
+	\chapter{Introduction} \label{sec:Intro}
+	Face recognition deals with automated recognition of people based on facial features, similar to how people distinguish other people based on their faces. Face recognition finds use cases in a wide variety of sectors. Some example uses cases are human-machine interaction, automated search for criminals,  automated passport checks, and granting access to buildings, events, webpages, or other Software. Applications that use facial biometric to grant access are summarized under the collective term face verification.  In the future, face verification could replace all keys and passwords. However, face verification requires especially considering security aspects to ensure that only authorized people have access. For achieving high security, it is essential to avoid false-positive verifications. Considering only security aspects, false negative detections is of insignificant interest. However, to provide good usability, it is necessary to keep false-negative detections as low as possible. Therefore a trade-off between security and usability is required \\
+	Face recognition systems typically use two or three stages. The first stage detects the position of all faces in an image. The second stage is optional. It detects face landmarks, which can be used as additional input for the third stage, the computation of the face descriptor. The face descriptor is a vector, which unambiguously distinguishes different persons. \\
+	Current state-of-the-art face recognition systems are based on deep neural networks since \glspl{DNN} achieve higher accuracy compared to conventional algorithms. The high accuracy of \glspl{DNN} is based on the ability of \glspl{DNN} to learn human facial features from an enormous number of training images, which leads to a good generalization. It is hard to pack all these features into conventional algorithms, because most of those features are not obvious, and it is difficult to describe a generalization of that features in code. \\
+	However, a decisive disadvantage of \gls{DNN}-based algorithms compared to conventional algorithms is that they require an enormous amount of computing effort to extract features from an image and to draw conclusions from that features. Therefore, \glspl{CPU} of embedded edge devices can hardly handle the computational effort required for processing \glspl{DNN} in real-time. Thus, neural network hardware accelerators are used to accelerate those computations.\\ 
+	The most popular hardware accelerators are \glspl{GPU}, which use a \gls{SIMD} or \gls{SIMT} architecture with hundreds to thousands of computational cores and fast external memory. However, \glspl{GPU} have a high power consumption, whicht is a disadvantage when using battery-powered devices. In addition, energy consumption is often a decisive factor, even with a wired system. Imagine face verification systems installed at all entrances of a building that operates 24 hours a day, 7 days a week. In that case more efficient system can contribute to high energy savings.\\
+	\Glspl{FPGA} represent an energy-saving, more environment-friendly alternative that also offers the advantage of programmable logic. However, \glspl{FPGA} achieves a lower throughput compared to \glspl{GPU} and requires more development effort. Nevertheless, the higher design effort can be worthwhile if the number of units is sufficient.\\
+	For this reason, that project shows how to build a face verification system that is running on a Zynq-7000-20 \gls{FPGA}. It is based on the \textit{Intuitus} hardware accelerator.    
+	%############################################################################
+	\chapter{System Design}
+	Face verifications has three basic tasks. First, it needs to detect faces in an image or video. Second it has to identify if the faces belongs to a known person. The third task is to do a life check, that ensures that the detected person is physically present. Which means that it detects if an image of a know person is shown to the camera. \\
+	\section{Detecting faces in an image}
+	Detecting faces in an image or video is a typical object detection task. There are many different types of DNN-based object detectors, eg. as YOLO, SSD, RetinaNet or EfficientDet. The requirements for the system are that face recognition should take place in real time and that the highest possible accuracy should be achieved. Based on these requirements, the designed system uses YOLOv3-tiny. It is a slim, simple object detector that still promises sufficient accuracy. Additionally, it uses mainly 2d convolutions with a kernel size of one or three, which simplifies the implementation of the network in an \gls{FPGA}. \\
+	YOLOv3-tiny is originally trained for the COCO dataset, which includes images labeled for 80 different objects such as cars, people, and various items from everyday life. However, the dataset does not enclose faces. Therefore, it is necessary to retrain the model for detecting faces instead of the objects included in the COCO dataset. 
+	\subsection{Obtaining the dataset}
+	First of all, however, a data set is required that contains the labeled faces of various people. When selecting a training data set, care should be taken to ensure that the genders and ethnicities are represented in a balanced way to achieve a good generalization. Therefore, the training of the face detector uses the vgg-face dataset. It comprises images of many famous people from different countries. However, the datasets consist of a link list to images, which are not all working anymore. Therefore, it is necessary to double-check the images and the labels before using them to train the model with correct labeled images. However, inspecting all these images and labels is extremely time-consuming and laborious. For this reason, it is easier to automatically re-label the data set than to manually double-check the labeling. In addition, the data set contains pictures of several people where only one face is labeled. That can also be improved by re-labeling. \\
+	For the automated creation of the dataset a python scripts tries to download the images listed in the vgg-dataset, tries to detect the faces in the image and stores the position of the detected faces in a label file. The automated face detection is done by using the face detector provided by dlib. Incorrect images, i.e. images that do not contain a face, are automatically sorted out. The information which actor belongs to which image is not used for training the face detector. \\
+	\subsection{Training the face detector}
+	The training of the face detector uses the PyTorch implementation of YOLOv3 tiny included in the Intuitus-converter \footnote{see https://github.com/LukiBa/Intuitus-converter.git}. That implementation bases on YOLOv3-ModelCompression-MultidatasetTraining \footnote{see https://github.com/SpursLipu/YOLOv3v4-ModelCompression-MultidatasetTraining-Multibackbone.git} which bases on the YOLOv3 implementation of ultralytics \footnote{see https://github.com/ultralytics/yolov3.git}. It expands the implementations with special layers that enable quantization aware training for the use of weights in the Intuitus hardware accelerator. The structure of the used model is defined by a .cfg configuration file. \\
+	Since the face detector has to detect only a single object each output layer of YOLOv3-tiny would have only eighteen output channels. However, the Intuitus hardware accelerator feature maps have to use an output channel number which is a multiple of 16. For this reason 14 channels would be unused when using three anchors per class. To use the 32 output channels of the hardware accelerator more efficiently, 10 instead of the usual 6 anchors are used. As a result, the bounding boxes are resolved finer, which can lead to more precise bounding boxes. \\
+	
+	
+	
+	
 
-\pagebreak
-%
-%-----------------------------------------------------------------------------
-% Acknowledgements, Abstract, Kurzfassung
-% This is not used for reports
-%
-\chapter*{Acknowledgements}
-\input{../sources/tex/front-matter/Acknowledgements.tex}
-\chapter*{Abstract}
-\addcontentsline{toc}{chapter}{Abstract}
-\input{../sources/tex/front-matter/Abstract.tex}
-\chapter*{Kurzfassung}
-\selectlanguage{german}
-\addcontentsline{toc}{chapter}{Kurzfassung}
-\input{../sources/tex/front-matter/Kurzfassung.tex}
-\selectlanguage{english}
-
-
-\tableofcontents
-\listoffigures 
-\listoftables
-\printglossary[type=symbolslist]							% List of symbols
-\printglossary[type=\acronymtype]
-
-%
-%----------------------------------------------------------------------------
-%############################################################################
-% Put your text body here!
-\input{../sources/tex/introduction/introduction.tex}
-\input{../sources/tex/state-of-the-art/neural-networks.tex}	
-\input{../sources/tex/state-of-the-art/object-detectors.tex}	
-\input{../sources/tex/state-of-the-art/hardware-accelerator.tex}
-\input{../sources/tex/design/hardware-accelerator-design.tex}
-\input{../sources/tex/design/software.tex}
-\input{../sources/tex/results.tex}
-\input{conclusion.tex}
-\input{outlook.tex}
-%############################################################################
-%----------------------------------------------------------------------------
-%
-%
-%----------------------------------------------------------------------------
-%
-% Bibliography
-%
-\backmatter
-%\printbibliography
-\bibliographystyle{../sources/classes-styles/IEEEtran}
-\bibliography{../sources/bibliography/bibliography}
-% uncomment the following line if you want the bibliography be shown in table of contents
-%\addcontentsline{toc}{chapter}{Bibliography}
-
-%
-%----------------------------------------------------------------------------
-%
-% Declaration of Authorship
-% This is not used for reports
-\ifthenelse{\equal{\doctype}{REPORT}}{}{
-\chapter*{Erklärung zur Verfassung der Arbeit}
-Hiermit erkläre ich, dass die vorliegende Arbeit gemäß dem Code of Conduct –
-Regeln zur Sicherung guter wissenschaftlicher Praxis (in der aktuellen Fassung
-des jeweiligen Mitteilungsblattes der TU Wien), insbesondere ohne unzulässige
-Hilfe Dritter und ohne Benutzung anderer als der angegebenen Hilfsmittel,
-angefertigt wurde. Die aus anderen Quellen direkt oder indirekt übernommenen
-Daten und Konzepte sind unter Angabe der Quelle gekennzeichnet. Die Arbeit
-wurde bisher weder im In– noch im Ausland in gleicher oder in ähnlicher Form
-in anderen Prüfungsverfahren vorgelegt.
-
-\vspace{3cm}
-
-\thispagestyle{empty}
-\begin{center}
-\begin{tabular}{@{}p{3.5in}p{2.5in}@{}}
-  Vienna, Austria \submissiondate & \hrulefill \\
-  & \centering \theauthor  \\
-\end{tabular}
-\end{center}
-}
-% Appendix
-%
-\appendix
-\input{../sources/tex/appendix/appendixA}
-
+	%----------------------------------------------------------------------------
+	%
+	%
+	%----------------------------------------------------------------------------
+	%
+	% Bibliography
+	%
+	%\backmatter
+	%\printbibliography
+	%\bibliographystyle{../sources/classes-styles/IEEEtran}
+	%\bibliography{../sources/bibliography/bibliography}
+	% uncomment the following line if you want the bibliography be shown in table of contents
+	%\addcontentsline{toc}{chapter}{Bibliography}
+	
+	
+	\vspace{3cm}
+	
+	\thispagestyle{empty}
+	\begin{center}
+		\begin{tabular}{@{}p{3.5in}p{2.5in}@{}}
+			Vienna, Austria \submissiondate & \hrulefill \\
+			& \centering \theauthor  \\
+		\end{tabular}
+	\end{center}
+	% Appendix
+	%
+	
 \end{document}
 %
 %----------------------------------------------------------------------------
