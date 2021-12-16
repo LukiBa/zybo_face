@@ -9,9 +9,6 @@ import numpy as np
 import cv2
 import dlib
 
-from urllib.request import Request, urlopen
-from urllib.request import urlopen
-
 from typing import Union
 import pathlib
 
@@ -20,20 +17,6 @@ import threading
 import multiprocessing
 import time
 import timeit
-
-
-def download(url, out):
-    image_formats = ("image/png", "image/jpeg")
-    req = Request(
-        url, headers={'User-Agent': 'Mozilla/5.0'}, unverifiable=True)
-    site = urlopen(req, timeout=10.0)
-    meta = site.info()  # get header of the http request
-    if not meta["content-type"] in image_formats:  # check if the content-type is a image
-        Exception("no image found in " + url +
-                  "output file " + str(out) + "not created.")
-    data = site.read()
-    with open(out, 'wb') as file:
-        file.write(data)
 
 
 def letterbox(

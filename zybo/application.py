@@ -67,10 +67,10 @@ class StateMachine():
         self.__missDetections = 0
         self.__ReqHeadRot = 8.0
 
-        self.__imgQueue = queue.Queue(maxsize=3)
-        self.__detectQueue = queue.Queue(maxsize=3)
-        self.__faceRecQueueIn = multiprocessing.Queue(maxsize=3)
-        self.__faceRecQueueOut = multiprocessing.Queue(maxsize=3)
+        self.__imgQueue = queue.Queue(maxsize=2)
+        self.__detectQueue = queue.Queue(maxsize=2)
+        self.__faceRecQueueIn = multiprocessing.Queue(maxsize=2)
+        self.__faceRecQueueOut = multiprocessing.Queue(maxsize=2)
 
         self.__ImageWorker = utils.Image_loader(self.__imgQueue, url, imgSize)
         self.__DetectionWorker = utils.Detector(self.__imgQueue, self.__detectQueue,
