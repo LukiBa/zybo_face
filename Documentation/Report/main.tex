@@ -373,12 +373,73 @@ dvipsnames
 	Detecting faces in an image or video is a typical object detection task. There are many different types of DNN-based object detectors, eg. as YOLO, SSD, RetinaNet or EfficientDet. The requirements for the system are that face recognition should take place in real time and that the highest possible accuracy should be achieved. Based on these requirements, the designed system uses YOLOv3-tiny. It is a slim, simple object detector that still promises sufficient accuracy. Additionally, it uses mainly 2d convolutions with a kernel size of one or three, which simplifies the implementation of the network in an \gls{FPGA}. \\
 	YOLOv3-tiny is originally trained for the COCO dataset, which includes images labeled for 80 different objects such as cars, people, and various items from everyday life. However, the dataset does not enclose faces. Therefore, it is necessary to retrain the model for detecting faces instead of the objects included in the COCO dataset. 
 	\subsection{Obtaining the dataset}
-	First of all, however, a data set is required that contains the labeled faces of various people. When selecting a training data set, care should be taken to ensure that the genders and ethnicities are represented in a balanced way to achieve a good generalization. Therefore, the training of the face detector uses the vgg-face dataset. It comprises images of many famous people from different countries. However, the datasets consist of a link list to images, which are not all working anymore. Therefore, it is necessary to double-check the images and the labels before using them to train the model with correct labeled images. However, inspecting all these images and labels is extremely time-consuming and laborious. For this reason, it is easier to automatically re-label the data set than to manually double-check the labeling. In addition, the data set contains pictures of several people where only one face is labeled. That can also be improved by re-labeling. \\
-	For the automated creation of the dataset a python scripts tries to download the images listed in the vgg-dataset, tries to detect the faces in the image and stores the position of the detected faces in a label file. The automated face detection is done by using the face detector provided by dlib. Incorrect images, i.e. images that do not contain a face, are automatically sorted out. The information which actor belongs to which image is not used for training the face detector. \\
-	\subsection{Training the face detector}
-	The training of the face detector uses the PyTorch implementation of YOLOv3 tiny included in the Intuitus-converter \footnote{see https://github.com/LukiBa/Intuitus-converter.git}. That implementation bases on YOLOv3-ModelCompression-MultidatasetTraining \footnote{see https://github.com/SpursLipu/YOLOv3v4-ModelCompression-MultidatasetTraining-Multibackbone.git} which bases on the YOLOv3 implementation of ultralytics \footnote{see https://github.com/ultralytics/yolov3.git}. It expands the implementations with special layers that enable quantization aware training for the use of weights in the Intuitus hardware accelerator. The structure of the used model is defined by a .cfg configuration file. \\
-	Since the face detector has to detect only a single object each output layer of YOLOv3-tiny would have only eighteen output channels. However, the Intuitus hardware accelerator feature maps have to use an output channel number which is a multiple of 16. For this reason 14 channels would be unused when using three anchors per class. To use the 32 output channels of the hardware accelerator more efficiently, 10 instead of the usual 6 anchors are used. As a result, the bounding boxes are resolved finer, which can lead to more precise bounding boxes. \\
+	First of all, however, a data set is required that contains the labeled faces of various people. When selecting a training data set, care should be taken to ensure that the genders and ethnicities are represented in a balanced way to achieve a good generalization. Therefore, the training of the face detector uses the vgg-face dataset. It comprises images of many famous people from different countries. However, the datasets consist of web links to images, which are not all working anymore. Therefore, it is necessary to double-check the images and the labels before using them to train the model with correct labeled images. However, inspecting all these images and labels is extremely time-consuming and laborious. For this reason, it is easier to automatically re-label the data set than to manually double-check the labeling. In addition, the data set contains pictures of several people where only one face is labeled. That can also be improved by re-labeling. \\
+	For the automated creation of the dataset a python scripts tries to download the images listed in the vgg-dataset, tries to detect the faces in the image and stores the position of the detected faces in a label file. The automated face detection is done by using the face detector provided by dlib. Incorrect images, i.e. images that do not contain a face, are automatically sorted out. The information which person belongs to which image is not used for training the face detector. \\
+	\subsection{Modifying the model}
+	The training of the face detector uses the PyTorch implementation of YOLOv3 tiny included in the Intuitus-converter \footnote{see https://github.com/LukiBa/Intuitus-converter.git}. That implementation is based on YOLOv3-ModelCompression-MultidatasetTraining \footnote{see https://github.com/SpursLipu/YOLOv3v4-ModelCompression-MultidatasetTraining-Multibackbone.git} which is based on the YOLOv3 implementation of Ultralytics \footnote{see https://github.com/ultralytics/yolov3.git}. It expands the implementations with layers that enable a 6-bit/8-bit quantization aware training for using the weights by the Intuitus hardware accelerator. 
+	Since the face detector has to detect only a single object, each output layer of YOLOv3-tiny would have only eighteen output channels. However, the Intuitus hardware accelerator feature maps have to use an output channel number which is a multiple of 16. For this reason, 14 channels would be unused when using three anchors per class. To use the 32 output channels of the hardware accelerator more efficiently, 10 instead of the usual 6 anchors are used. As a result, the bounding boxes are resolved finer, which can lead to more precise bounding boxes. It is not required to do modifications of the PyTorch code to modify the structure of the used model sinc it is defined by a .cfg configuration file. \\	
 	
+	\subsection{Quantization-aware training the model}
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{lc cc c c}
+			\toprule[1.5pt]
+			\textbf{Task} & \textbf{mAP}$^{50}$ & \textbf{mAP diff} & \textbf{Quantization} & \textbf{train} &\textbf{epochs}  \\
+			\midrule[1.5pt] 
+			\textbf{1. Train from scratch} & 0.994 & - & float32 & $\surd$ & 30 \\
+			\textbf{2. replace LeakyReLU with ReLU} & 0.994 & - & float32 & $\surd$ & 7  \\
+			\textbf{3. fold Batchnormalization layers}  & 0.994 & - & float32 & $\surd$ & 3 \\
+			\textbf{4. quantization aware training} & 0.994 & - & int6/int8 & $\surd$ & 20  \\
+			\textbf{5. convert to postscale} & 0.986 &  \textcolor{red}{$\downarrow 0.8\%$} & int6/int8 & \textit{X} & \\
+			\textbf{6. simulate for FPGA}  & 0.986 & - & int6/int8 & \textit{X} &  \\  							
+			\bottomrule[1.5pt]
+		\end{tabular}
+		\caption{Tasks for training and quantizing YOLOv3-tiny face detector}	
+		\label{tab:quantization-tasks}
+	\end{table}
+	\Cref{tab:quantization-tasks} shows the training and quantization steps of the YOLOv3-tiny face detector. The first step is to train the model using the default float32 quantization. The model achieves an \gls{mAP}$^{50}$ of $99,4\%$ and reaches convergence after 30 epochs. \\
+	The \gls{mAP}$^{50}$ is the  mean value of the average precision over all used classes using an intersection over union of $0.5$. In the case of using only a single class the \gls{mAP} equals the average precision. The intersection over union defines the minimum overlaying area of the detected bounding box and the ground truth bounding box to be counted as correct detection. The average precision is defined as the are mean value of the achieved precision when adjusting the confidence threshold to get eleven recall levels between $0.1$ and $1.0$. Whereas the precision is defined as the ration of correct detections to all detection of the model and the recall is defined by the ratio of correct detections to the number ground truth detections. \\
+	\\\
+	The next step is to replace the LeakyReLU activation function with \gls{Relu}. This is necessary since the Intuitus hardware accelerator support only the \gls{Relu} or linear activation functions. The reason for starting the training process with LeakyReLU is that \gls{Relu} zeros all negative activations, which can lead to vanishing gradients. \Cref{tab:quantization-tasks} show that replacing LeakyRelu with ReLU does not lead to an accuracy loss of the face detector. The retraining reaches convergence after 7 epochs and uses a float32 quantization. \\
+	\\\
+	Before starting with the quantization aware training the batch normalization layers are folded into the previous layers. Removing the batch normalization layer from the network is necessary, since the \gls{FPGA} implementation does not support batch normalization. However, folding the batchnorm layers does not influence the inference of a neural network. Therefore, it is a common practice the remove batch normalization after the training process even when using \glspl{CPU} or \glspl{GPU}.\\
+	\\\
+	The next step is to do quantization aware training. It quantizes the weights and biases to 6-bit integer values, and the activations to 8-bit integer values before doing a standard float32 convolution. The scales for the weights and biases are created by using the maximum and minimum value of all weights or biases respectively of a convolution layer. The scales of the activations are computed using the running mean of the minimum and maximum value of the activations of each batch. \Cref{eq:w-q}, \Cref{eq:b-q} and \Cref{eq:x-q} shows the quantization of the weights, biases and activations. \Cref{eq:conv-q} shows the quantization aware convolution. \Cref{eq:y-q} shows the backward transformation of the quantized layer outputs.   
+	\begin{equation} \label{eq:w-q}
+		\mathbf{w_{q}} = \text{clip}(\text{round}(\mathbf{w} \cdot scale_w)) 
+	\end{equation}
+	\begin{equation} \label{eq:b-q}
+		\mathbf{b_q} = \frac{\text{clip}(\text{round}(\mathbf{b} \cdot  scale_b))}{scale_b} \cdot scale_a \cdot scale_w 
+	\end{equation}
+	\begin{equation} \label{eq:x-q}
+		\mathbf{x_q} = \text{clip}(\text{floor}(\mathbf{x} \cdot scale_w))
+	\end{equation}
+	\begin{equation} \label{eq:conv-q}
+		\mathbf{y_q} = b_q + \text{conv2d}(\mathbf{x_q},\mathbf{w_q})  
+	\end{equation}
+	\begin{equation} \label{eq:y-q}
+		\mathbf{y} = \frac{\mathbf{y_q}}{scale_a \cdot scale_w }
+	\end{equation}
+	After doing quantization aware training for 20 epochs the quantized network achieves an equal accuracy as the full precision network. \\
+	However, quantization aware training uses still float32 for the convolution operation. \\
+	\\\
+	When applying the neural network on the \gls{FPGA} it is necessary to fuse the pre- and post-scaling of the activations to a single shift operation after the convolution layer. That is done using the convert to postscale script of the Intuitus-converter. It fuses the pre-scaling operations\footnote{see \Cref{eq:x-q}} with the post-scaling of the previous layer\footnote{see \Cref{eq:y-q}} to a single shift operations. That leads to an accuracy loss of $0.8\%$. \\
+	\\\
+	The final step is to compute the achievable accuracy using the \gls{FPGA} implementation. That is done using specialiced PyTorch layers, which exactly simulates the behaviour of the \gls{FPGA} by quantizing the interim results according to the interim quantization used by the \gls{FPGA}, which is 15-bit for inter-kernel computations and 12-bit for inter-channel computations. \Cref{tab:quantization-tasks} shows that the quantization of the interim results does not influence the achievable accuracy when using YOLOv3-tiny for face detection.   
+	
+	\subsection{Apply the model on the hardware}
+	To execute a neural network using the Intuitus hardware accelerator, it is necessary to convert the PyTorch model into Intuitus commands. That is done using the generate Intuitus form torch script. It iterates through the network and generates commands for each layer. The first step is to tile the input feature map into processable .
+	
+	\subsubsection{Configuring the device driver}
+	The device driver uses sends the generated commands and the feature maps according to the configured network structure and the tiling which created by the Intuitus-converter. The configuration of the device driver is simplified by a C++ to numpy wrapper. The wrapper provides high level function for conv2d, pooling, split and concatenate layers comparable to the functions provided by PyTorch. \\
+	
+	\subsection{Structure of the hardware accelerator}
+	
+	\section{Liveness detection} 
+	The liveness detection is used to ensure that the face verification system grants access only to physically present persons. It checks whether the face detector detects living person or just a photo of a person which is shown to the camera. Therefore, it is an additional safety barrier. The intention is to make it difficult to trick the face verification system.
+	
+	
+
 	
 	
 	
