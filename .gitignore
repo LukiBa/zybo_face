@@ -131,8 +131,6 @@ dmypy.json
 dlib_models
 saved_descriptors
 descriptors
-zybo/face-commands
-zybo/face-commands
 Documentation/Report/svg-inkscape
 out
 trainingFaceDetect/intuitus/weights_face3
