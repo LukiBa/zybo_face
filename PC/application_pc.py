@@ -23,17 +23,18 @@ def _create_parser():
                         default='./saved_descriptors', help='path to descriptor file')
     parser.add_argument('--threshold', type=float, default=0.6,
                         help='Threshold of euclidean distance to distinguish persons.')
-    parser.add_argument('--max_angle', type=float, default=4.0,
-                        help='maximum rotation angle of the face.')
-    parser.add_argument('--max_fps', type=float, default=5.0,
-                        help='maximum rotation angle of the face.')
+    parser.add_argument('--max_angle', type=float, default=4.0, help='maximum rotation angle of the face.')
+    parser.add_argument('--max_fps', type=float, default=5.0, help='maximum frame rate of the application.')
     parser.add_argument(
         '--cam_url', type=str,
-        default="http://10.0.0.241/zm/cgi-bin/nph-zms?mode=jpeg&monitor=2&maxfps=5&scale=100&user=admin&pass=admin")
+        default="http://10.0.0.241/zm/cgi-bin/nph-zms?mode=jpeg&monitor=2&maxfps=5&scale=100&user=admin&pass=admin",
+        help="IP camera url including username and password")
     parser.add_argument('--landmarkPredictor', type=str,
-                        default="../dlib_models/shape_predictor_68_face_landmarks.dat")
+                        default="../dlib_models/shape_predictor_68_face_landmarks.dat",
+                        help="Path to dlib 68 face landmark predictor: shape_predictor_68_face_landmarks.dat")
     parser.add_argument('--faceDescriptor', type=str,
-                        default="../dlib_models/dlib_face_recognition_resnet_model_v1.dat")
+                        default="../dlib_models/dlib_face_recognition_resnet_model_v1.dat",
+                        help="Path to dlibs face recognition model: dlib_face_recognition_resnet_model_v1.dat")
     return parser.parse_args()
 
 

@@ -1,0 +1,481 @@
+\documentclass[%
+a4paper,
+twoside,
+openany,
+dvipsnames
+]
+{report}
+%
+%----------------------------------------------------------------------------
+%
+% Title
+%
+\title{Real time face verification using a Zynq-7000-20 FPGA}
+%
+%----------------------------------------------------------------------------
+%
+% Author
+%
+\author{Lukas Baischer}
+%
+%----------------------------------------------------------------------------
+%
+% Matrikelnummer/Registrationnumber
+%
+\newcommand{\registrationnumber}{01426506}
+%
+%----------------------------------------------------------------------------
+%
+% Supervisor(s)
+%
+\newcommand{\supervisor}{Assistant Prof. Nima Taherinejad , PhD}
+%
+%----------------------------------------------------------------------------
+%
+% Submission Date
+%
+\newcommand{\submissiondate}{20.12.2021}
+
+%
+% ----------------------------------------------------------------------------
+%
+% Uncomment only one of the following depending on your type of document:
+%
+\newcommand{\doctype}{REPORT}
+%\newcommand{\doctype}{DISSERTATION}
+%\newcommand{\doctype}{MASTERTHESIS}
+%\newcommand{\doctype}{BACHELORTHESIS}
+%
+%-----------------------------------------------------------------------------
+%
+% Use the 'Libertine' font type
+%
+\usepackage{libertine}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,ngerman]{babel}
+%
+%----------------------------------------------------------------------------
+%
+% Set page margins
+%
+\usepackage{geometry}
+\geometry{%
+	left   = 2cm,
+	right  = 2cm,
+	top    = 2cm,
+	bottom = 2cm
+}
+%
+%----------------------------------------------------------------------------
+%
+% Set line spacing
+%
+\usepackage{setspace}
+\setstretch{1.5}
+%
+%----------------------------------------------------------------------------
+%
+% Set paragraph: No indentation, but include an empty line
+%
+\usepackage[parfill]{parskip}
+%
+%----------------------------------------------------------------------------
+%
+% Settings for hyperlinks
+%
+\usepackage{hyperref}
+\hypersetup{%
+	colorlinks = false,
+	allcolors  = blue,
+}
+%
+%----------------------------------------------------------------------------
+%
+% Use graphics
+%
+\usepackage{graphicx}
+\usepackage{subcaption }
+%
+%----------------------------------------------------------------------------
+%
+% Use colors
+%
+\usepackage{xcolor}
+\usepackage{colortbl}
+%
+%----------------------------------------------------------------------------
+%
+% Define a TODO and a DONE command
+%
+\newcommand{\todo}[1]{\textcolor{red}{#1}}
+\newcommand{\done}[1]{}
+%
+%
+\usepackage[hang]{footmisc}
+\renewcommand{\hangfootparindent}{2em}
+\renewcommand{\hangfootparskip}{2em}
+\renewcommand{\footnotemargin}{0.00001pt}
+\renewcommand{\footnotelayout}{\hspace{2em}}
+%
+%
+%----------------------------------------------------------------------------
+%
+% Set line spacing for all figure environments
+% From: https://tex.stackexchange.com/a/166458
+%
+\let\svfigure\figure
+\let\svendfigure\endfigure
+\renewenvironment{figure}[1][tb]{\svfigure[#1]\setstretch{1}}
+{\svendfigure}
+%
+%----------------------------------------------------------------------------
+%
+% Use AMS math fonts
+%
+\usepackage{amsfonts}
+\usepackage[sans]{dsfont}
+%
+%----------------------------------------------------------------------------
+%
+% Use multiple figures in one float
+%
+\usepackage{subcaption}
+%
+%----------------------------------------------------------------------------
+%
+% Use dummy text
+%
+\usepackage{lipsum}
+%
+%----------------------------------------------------------------------------
+%
+% Use extended list environments (e.g., 'inparaenum')
+%
+\usepackage{paralist}
+%
+%----------------------------------------------------------------------------
+%
+% Use listings
+%
+\usepackage{listings}
+%
+%----------------------------------------------------------------------------
+%
+% Typeset pseudo code
+%
+\usepackage{syntax}
+%
+%----------------------------------------------------------------------------
+%
+% More options for boxes
+%
+\usepackage{realboxes}
+%
+% Command for vertical text in tabulars
+%
+\newcommand*\rot{\rotatebox{90}}
+%
+%----------------------------------------------------------------------------
+%
+% Package for logos (e.g., the BibTeX logo)
+%
+\usepackage{dtk-logos}
+%
+%----------------------------------------------------------------------------
+%
+% Use \textsubscript
+%
+\usepackage{fixltx2e}
+%
+%----------------------------------------------------------------------------
+%
+% More options for tabulars
+%
+\usepackage{array}
+%
+%----------------------------------------------------------------------------
+%
+% Use appendices
+%
+\usepackage[titletoc]{appendix}
+%
+%----------------------------------------------------------------------------
+%
+% Macros to use title and author information in the document
+%
+\makeatletter
+\let\thetitle\@title
+\let\theauthor\@author
+\makeatother
+%
+%----------------------------------------------------------------------------
+%
+% Do not show page numbers on empty pages
+%
+\usepackage{emptypage}
+%
+%---------------------------------------------------------------------------
+%
+% Set spacing between items (looks really weird otherwise)
+\usepackage{enumitem}
+\setitemize{itemsep=-8pt}
+\setenumerate{itemsep=-8pt}
+%
+%----------------------------------------------------------------------------
+%
+% Use algorithm and algpseudocode to create pseudo code algorithms 
+%
+\usepackage{algorithm} 
+\usepackage{algpseudocode} 
+%----------------------------------------------------------------------------
+%
+% Use pythonhighlight for python syntax highlighting see https://github.com/olivierverdier/python-latex-highlighting for more information
+%
+\usepackage{pythonhighlight}
+%
+%----------------------------------------------------------------------------
+%
+% Use svg package for plotting inkscape graphics 
+%
+\usepackage{svg}
+%
+%----------------------------------------------------------------------------
+% 
+% Use float to be able to force figure position using [H]
+%
+\usepackage{float}
+%
+%----------------------------------------------------------------------------
+% 
+% Use pdfpages to be able to add pdf to appendix and pdflscape for landcape pdfs 
+%
+\usepackage{pdfpages}
+\usepackage{pdflscape}
+%
+%----------------------------------------------------------------------------
+% 
+% Use glossaries to use acronyms and symbols 
+%
+\usepackage[acronym,nonumberlist,nowarn,style=long]{glossaries}
+\usepackage{makeidx}
+\usepackage{csquotes}
+%
+%----------------------------------------------------------------------------
+% 
+% For Si units 
+%
+\usepackage{siunitx}
+%
+%----------------------------------------------------------------------------
+% 
+% Box for for research question 
+%
+\usepackage{fbox}
+%
+%----------------------------------------------------------------------------
+% 
+% For nicer tables 
+%
+\usepackage{booktabs}
+\usepackage{tabularx}
+\newcolumntype{C}{>{\centering\arraybackslash}X} 
+\usepackage{multirow}
+%
+%----------------------------------------------------------------------------
+%
+% For section comments 
+%
+\usepackage{comment}
+%
+%----------------------------------------------------------------------------
+% 
+% cite in order to sort citation numbers  
+%
+\usepackage{cite}
+%
+%----------------------------------------------------------------------------
+%
+% Use the cleverref package -- Load this package as the very last!
+%
+\usepackage{nameref}
+%
+%----------------------------------------------------------------------------
+%
+% Use the cleverref package -- Load this package as the very last!
+%
+\usepackage{cleveref}
+%
+%----------------------------------------------------------------------------
+%
+% Include listings for Code highlighting 
+%
+\input{../sources/classes-styles/listings.tex}
+%
+%----------------------------------------------------------------------------
+%
+%----------------------------------------------------------------------------
+%
+% GLOSSARIES SETTINGS
+%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+\setlength{\glsdescwidth}{1.0\textwidth}		% left aligned
+\renewcommand*{\glspostdescription}{}				% Remove the dot at the end of glossary descriptions
+\renewcommand*{\glsgroupskip}{}							% Remove vertical space between index groups
+%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+%
+%
+% SYMBOLS, ACRONYMS AND INDEX
+%:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+\newglossary[slg]{symbolslist}{syi}{syg}{Symbols}
+%
+\input{../sources/Acronyms.tex}
+\input{../sources/Symbols.tex}
+%
+\makeglossaries
+\makeindex
+
+
+% Document body
+%
+\begin{document}
+	\selectlanguage{english}
+	%
+	%----------------------------------------------------------------------------
+	%
+	% Select title page
+	%
+	\ifthenelse{\equal{\doctype}{REPORT}}{\input{titlepages/report.tex}}{}
+	\ifthenelse{\equal{\doctype}{DISSERTATION}}{\input{titlepages/doctor.tex}}{}
+	\ifthenelse{\equal{\doctype}{MASTERTHESIS}}{\input{titlepages/master.tex}}{}
+		
+	\tableofcontents
+	\listoffigures 
+	\listoftables
+	\printglossary[type=symbolslist]							% List of symbols
+	\printglossary[type=\acronymtype]
+	
+	%
+	%----------------------------------------------------------------------------
+	%############################################################################
+	\pagebreak
+	\chapter{Introduction} \label{sec:Intro}
+	Face recognition deals with automated recognition of people based on facial features, similar to how people distinguish other people based on their faces. Face recognition finds use cases in a wide variety of sectors. Some example uses cases are human-machine interaction, automated search for criminals,  automated passport checks, and granting access to buildings, events, webpages, or other Software. Applications that use facial biometric to grant access are summarized under the collective term face verification.  In the future, face verification could replace all keys and passwords. However, face verification requires especially considering security aspects to ensure that only authorized people have access. For achieving high security, it is essential to avoid false-positive verifications. Considering only security aspects, false negative detections is of insignificant interest. However, to provide good usability, it is necessary to keep false-negative detections as low as possible. Therefore a trade-off between security and usability is required \\
+	Face recognition systems typically use two or three stages. The first stage detects the position of all faces in an image. The second stage is optional. It detects face landmarks, which can be used as additional input for the third stage, the computation of the face descriptor. The face descriptor is a vector, which unambiguously distinguishes different persons. \\
+	Current state-of-the-art face recognition systems are based on deep neural networks since \glspl{DNN} achieve higher accuracy compared to conventional algorithms. The high accuracy of \glspl{DNN} is based on the ability of \glspl{DNN} to learn human facial features from an enormous number of training images, which leads to a good generalization. It is hard to pack all these features into conventional algorithms, because most of those features are not obvious, and it is difficult to describe a generalization of that features in code. \\
+	However, a decisive disadvantage of \gls{DNN}-based algorithms compared to conventional algorithms is that they require an enormous amount of computing effort to extract features from an image and to draw conclusions from that features. Therefore, \glspl{CPU} of embedded edge devices can hardly handle the computational effort required for processing \glspl{DNN} in real-time. Thus, neural network hardware accelerators are used to accelerate those computations.\\ 
+	The most popular hardware accelerators are \glspl{GPU}, which use a \gls{SIMD} or \gls{SIMT} architecture with hundreds to thousands of computational cores and fast external memory. However, \glspl{GPU} have a high power consumption, whicht is a disadvantage when using battery-powered devices. In addition, energy consumption is often a decisive factor, even with a wired system. Imagine face verification systems installed at all entrances of a building that operates 24 hours a day, 7 days a week. In that case more efficient system can contribute to high energy savings.\\
+	\Glspl{FPGA} represent an energy-saving, more environment-friendly alternative that also offers the advantage of programmable logic. However, \glspl{FPGA} achieves a lower throughput compared to \glspl{GPU} and requires more development effort. Nevertheless, the higher design effort can be worthwhile if the number of units is sufficient.\\
+	For this reason, that project shows how to build a face verification system that is running on a Zynq-7000-20 \gls{FPGA}. It is based on the \textit{Intuitus} hardware accelerator.    
+	%############################################################################
+	\chapter{System Design}
+	Face verifications has three basic tasks. First, it needs to detect faces in an image or video. Second it has to identify if the faces belongs to a known person. The third task is to do a life check, that ensures that the detected person is physically present. Which means that it detects if an image of a know person is shown to the camera. \\
+	\section{Detecting faces in an image}
+	Detecting faces in an image or video is a typical object detection task. There are many different types of DNN-based object detectors, eg. as YOLO, SSD, RetinaNet or EfficientDet. The requirements for the system are that face recognition should take place in real time and that the highest possible accuracy should be achieved. Based on these requirements, the designed system uses YOLOv3-tiny. It is a slim, simple object detector that still promises sufficient accuracy. Additionally, it uses mainly 2d convolutions with a kernel size of one or three, which simplifies the implementation of the network in an \gls{FPGA}. \\
+	YOLOv3-tiny is originally trained for the COCO dataset, which includes images labeled for 80 different objects such as cars, people, and various items from everyday life. However, the dataset does not enclose faces. Therefore, it is necessary to retrain the model for detecting faces instead of the objects included in the COCO dataset. 
+	\subsection{Obtaining the dataset}
+	First of all, however, a data set is required that contains the labeled faces of various people. When selecting a training data set, care should be taken to ensure that the genders and ethnicities are represented in a balanced way to achieve a good generalization. Therefore, the training of the face detector uses the vgg-face dataset. It comprises images of many famous people from different countries. However, the datasets consist of web links to images, which are not all working anymore. Therefore, it is necessary to double-check the images and the labels before using them to train the model with correct labeled images. However, inspecting all these images and labels is extremely time-consuming and laborious. For this reason, it is easier to automatically re-label the data set than to manually double-check the labeling. In addition, the data set contains pictures of several people where only one face is labeled. That can also be improved by re-labeling. \\
+	For the automated creation of the dataset a python scripts tries to download the images listed in the vgg-dataset, tries to detect the faces in the image and stores the position of the detected faces in a label file. The automated face detection is done by using the face detector provided by dlib. Incorrect images, i.e. images that do not contain a face, are automatically sorted out. The information which person belongs to which image is not used for training the face detector. \\
+	\subsection{Modifying the model}
+	The training of the face detector uses the PyTorch implementation of YOLOv3 tiny included in the Intuitus-converter \footnote{see https://github.com/LukiBa/Intuitus-converter.git}. That implementation is based on YOLOv3-ModelCompression-MultidatasetTraining \footnote{see https://github.com/SpursLipu/YOLOv3v4-ModelCompression-MultidatasetTraining-Multibackbone.git} which is based on the YOLOv3 implementation of Ultralytics \footnote{see https://github.com/ultralytics/yolov3.git}. It expands the implementations with layers that enable a 6-bit/8-bit quantization aware training for using the weights by the Intuitus hardware accelerator. 
+	Since the face detector has to detect only a single object, each output layer of YOLOv3-tiny would have only eighteen output channels. However, the Intuitus hardware accelerator feature maps have to use an output channel number which is a multiple of 16. For this reason, 14 channels would be unused when using three anchors per class. To use the 32 output channels of the hardware accelerator more efficiently, 10 instead of the usual 6 anchors are used. As a result, the bounding boxes are resolved finer, which can lead to more precise bounding boxes. It is not required to do modifications of the PyTorch code to modify the structure of the used model sinc it is defined by a .cfg configuration file. \\	
+	
+	\subsection{Quantization-aware training the model}
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{lc cc c c}
+			\toprule[1.5pt]
+			\textbf{Task} & \textbf{mAP}$^{50}$ & \textbf{mAP diff} & \textbf{Quantization} & \textbf{train} &\textbf{epochs}  \\
+			\midrule[1.5pt] 
+			\textbf{1. Train from scratch} & 0.994 & - & float32 & $\surd$ & 30 \\
+			\textbf{2. replace LeakyReLU with ReLU} & 0.994 & - & float32 & $\surd$ & 7  \\
+			\textbf{3. fold Batchnormalization layers}  & 0.994 & - & float32 & $\surd$ & 3 \\
+			\textbf{4. quantization aware training} & 0.994 & - & int6/int8 & $\surd$ & 20  \\
+			\textbf{5. convert to postscale} & 0.986 &  \textcolor{red}{$\downarrow 0.8\%$} & int6/int8 & \textit{X} & \\
+			\textbf{6. simulate for FPGA}  & 0.986 & - & int6/int8 & \textit{X} &  \\  							
+			\bottomrule[1.5pt]
+		\end{tabular}
+		\caption{Tasks for training and quantizing YOLOv3-tiny face detector}	
+		\label{tab:quantization-tasks}
+	\end{table}
+	\Cref{tab:quantization-tasks} shows the training and quantization steps of the YOLOv3-tiny face detector. The first step is to train the model using the default float32 quantization. The model achieves an \gls{mAP}$^{50}$ of $99,4\%$ and reaches convergence after 30 epochs. \\
+	The \gls{mAP}$^{50}$ is the  mean value of the average precision over all used classes using an intersection over union of $0.5$. In the case of using only a single class the \gls{mAP} equals the average precision. The intersection over union defines the minimum overlaying area of the detected bounding box and the ground truth bounding box to be counted as correct detection. The average precision is defined as the are mean value of the achieved precision when adjusting the confidence threshold to get eleven recall levels between $0.1$ and $1.0$. Whereas the precision is defined as the ration of correct detections to all detection of the model and the recall is defined by the ratio of correct detections to the number ground truth detections. \\
+	\\\
+	The next step is to replace the LeakyReLU activation function with \gls{Relu}. This is necessary since the Intuitus hardware accelerator support only the \gls{Relu} or linear activation functions. The reason for starting the training process with LeakyReLU is that \gls{Relu} zeros all negative activations, which can lead to vanishing gradients. \Cref{tab:quantization-tasks} show that replacing LeakyRelu with ReLU does not lead to an accuracy loss of the face detector. The retraining reaches convergence after 7 epochs and uses a float32 quantization. \\
+	\\\
+	Before starting with the quantization aware training the batch normalization layers are folded into the previous layers. Removing the batch normalization layer from the network is necessary, since the \gls{FPGA} implementation does not support batch normalization. However, folding the batchnorm layers does not influence the inference of a neural network. Therefore, it is a common practice the remove batch normalization after the training process even when using \glspl{CPU} or \glspl{GPU}.\\
+	\\\
+	The next step is to do quantization aware training. It quantizes the weights and biases to 6-bit integer values, and the activations to 8-bit integer values before doing a standard float32 convolution. The scales for the weights and biases are created by using the maximum and minimum value of all weights or biases respectively of a convolution layer. The scales of the activations are computed using the running mean of the minimum and maximum value of the activations of each batch. \Cref{eq:w-q}, \Cref{eq:b-q} and \Cref{eq:x-q} shows the quantization of the weights, biases and activations. \Cref{eq:conv-q} shows the quantization aware convolution. \Cref{eq:y-q} shows the backward transformation of the quantized layer outputs.   
+	\begin{equation} \label{eq:w-q}
+		\mathbf{w_{q}} = \text{clip}(\text{round}(\mathbf{w} \cdot scale_w)) 
+	\end{equation}
+	\begin{equation} \label{eq:b-q}
+		\mathbf{b_q} = \frac{\text{clip}(\text{round}(\mathbf{b} \cdot  scale_b))}{scale_b} \cdot scale_a \cdot scale_w 
+	\end{equation}
+	\begin{equation} \label{eq:x-q}
+		\mathbf{x_q} = \text{clip}(\text{floor}(\mathbf{x} \cdot scale_w))
+	\end{equation}
+	\begin{equation} \label{eq:conv-q}
+		\mathbf{y_q} = b_q + \text{conv2d}(\mathbf{x_q},\mathbf{w_q})  
+	\end{equation}
+	\begin{equation} \label{eq:y-q}
+		\mathbf{y} = \frac{\mathbf{y_q}}{scale_a \cdot scale_w }
+	\end{equation}
+	After doing quantization aware training for 20 epochs the quantized network achieves an equal accuracy as the full precision network. \\
+	However, quantization aware training uses still float32 for the convolution operation. \\
+	\\\
+	When applying the neural network on the \gls{FPGA} it is necessary to fuse the pre- and post-scaling of the activations to a single shift operation after the convolution layer. That is done using the convert to postscale script of the Intuitus-converter. It fuses the pre-scaling operations\footnote{see \Cref{eq:x-q}} with the post-scaling of the previous layer\footnote{see \Cref{eq:y-q}} to a single shift operations. That leads to an accuracy loss of $0.8\%$. \\
+	\\\
+	The final step is to compute the achievable accuracy using the \gls{FPGA} implementation. That is done using specialiced PyTorch layers, which exactly simulates the behaviour of the \gls{FPGA} by quantizing the interim results according to the interim quantization used by the \gls{FPGA}, which is 15-bit for inter-kernel computations and 12-bit for inter-channel computations. \Cref{tab:quantization-tasks} shows that the quantization of the interim results does not influence the achievable accuracy when using YOLOv3-tiny for face detection.   
+	
+	\subsection{Apply the model on the hardware}
+	To execute a neural network using the Intuitus hardware accelerator, it is necessary to convert the PyTorch model into Intuitus commands. That is done using the generate Intuitus form torch script. It iterates through the network and generates commands for each layer. The first step is to tile the input feature map into processable .
+	
+	\subsubsection{Configuring the device driver}
+	The device driver uses sends the generated commands and the feature maps according to the configured network structure and the tiling which created by the Intuitus-converter. The configuration of the device driver is simplified by a C++ to numpy wrapper. The wrapper provides high level function for conv2d, pooling, split and concatenate layers comparable to the functions provided by PyTorch. \\
+	
+	\subsection{Structure of the hardware accelerator}
+	
+	\section{Liveness detection} 
+	The liveness detection is used to ensure that the face verification system grants access only to physically present persons. It checks whether the face detector detects living person or just a photo of a person which is shown to the camera. Therefore, it is an additional safety barrier. The intention is to make it difficult to trick the face verification system.
+	
+	
+
+	
+	
+	
+
+	%----------------------------------------------------------------------------
+	%
+	%
+	%----------------------------------------------------------------------------
+	%
+	% Bibliography
+	%
+	%\backmatter
+	%\printbibliography
+	%\bibliographystyle{../sources/classes-styles/IEEEtran}
+	%\bibliography{../sources/bibliography/bibliography}
+	% uncomment the following line if you want the bibliography be shown in table of contents
+	%\addcontentsline{toc}{chapter}{Bibliography}
+	
+	
+	\vspace{3cm}
+	
+	\thispagestyle{empty}
+	\begin{center}
+		\begin{tabular}{@{}p{3.5in}p{2.5in}@{}}
+			Vienna, Austria \submissiondate & \hrulefill \\
+			& \centering \theauthor  \\
+		\end{tabular}
+	\end{center}
+	% Appendix
+	%
+	
+\end{document}
+%
+%----------------------------------------------------------------------------
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

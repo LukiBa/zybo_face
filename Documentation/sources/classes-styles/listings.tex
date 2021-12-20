@@ -1,0 +1,83 @@
+
+
+\definecolor{mygreen}{RGB}{0,102,0} % color values Red, Green, Blue
+\definecolor{mylilas}{RGB}{170,55,241}
+\definecolor{myred}{RGB}{94,32,40}
+
+%----------------------------------------------------------------------------
+% Matlab
+\lstset{language=Matlab,%
+    %basicstyle=\color{red},
+    frame = single,
+    basicstyle=\tiny,
+    breaklines=true,%
+    morekeywords={matlab2tikz},
+    keywordstyle=\color{blue},%
+    morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
+    identifierstyle=\color{black},%
+    stringstyle=\color{mylilas},
+    commentstyle=\color{mygreen},%
+    showstringspaces=false,%without this there will be a symbol in the places where there is a space
+    numbers=left,%
+    numberstyle={\tiny \color{black}},% size of the numbers
+    numbersep=9pt, % this defines how far the numbers are from the text
+    emph=[1]{for,end,break},emphstyle=[1]\color{red}, %some words to emphasise
+    %emph=[2]{word1,word2}, emphstyle=[2]{style},    
+}
+%----------------------------------------------------------------------------
+% C
+\lstdefinestyle{CStyle}{
+frame = single,
+    backgroundcolor=\color{white},   
+    commentstyle=\color{mygreen},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{black},
+    stringstyle=\color{mylilas},
+    basicstyle=\tiny,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=9pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    emph=[1]{for,end,break},emphstyle=[1]\color{blue}, %some words to emphasise
+    language=C
+}
+%----------------------------------------------------------------------------
+% VHDL
+\lstdefinelanguage{VHDL1}{
+    breaklines=true,%
+    numberstyle={\tiny \color{black}},% size of the numbers
+    numbersep=9pt, % this defines how far the numbers are from the text
+   morekeywords={
+     library,use,all,entity,is,port,in,out,end,architecture,of,
+     begin,and,else,if,elsif,process,signal,end,then
+   },
+    emph=[1]{std_logic,std_logic_vector,STD_LOGIC,STD_LOGIC_VECTOR,rising_edge},emphstyle=[1]\color{myred},
+   morecomment=[l]--
+}
+
+\lstdefinestyle{vhdl}{
+    frame = single, 
+    backgroundcolor=\color{white},   
+    numberstyle=\tiny\color{black},
+    stringstyle=\color{mylilas},
+    basicstyle=\tiny,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=9pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=4,
+   language     = VHDL1,
+   keywordstyle = \color{blue}\bfseries,
+   commentstyle = \color{mygreen}
+}
