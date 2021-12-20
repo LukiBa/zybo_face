@@ -9,7 +9,7 @@ Face verification based on intuitus hardware accelerator and dlib using a ZYBO-Z
 - [x] Landmark prediction using dlib
 - [x] Facial pose estimation. 
 - [x] Face recognition using dlibs face recognition resnet model v1
-- [x] Life verification 
+- [x] Live verification 
 - [x] Plot results to hdmi screen
 - [x] frame rate up to 5 fps
 - [x] Power consumption < 3.5W 

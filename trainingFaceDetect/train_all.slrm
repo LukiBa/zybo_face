@@ -1,0 +1,50 @@
+#!/bin/bash
+#SBATCH -J pt_yolov3-tiny-face-416x416
+#SBATCH -N 1
+#SBATCH --partition gpu_gtx1080single
+#SBATCH --qos gpu_gtx1080single
+#SBATCH --gres gpu:1
+
+module purge
+module load gcc/7.3 python/3.7.4 cuda/10.1.168
+
+source /home/lv71513/lbaischer/nn/bin/activate
+chmod +x /home/lv71513/lbaischer/scripts/pt-train-face.sh
+. /home/lv71513/lbaischer/scripts/pt-train-face.sh
+
+chmod +x /home/lv71513/lbaischer/scripts/pt-train-face-relu.sh
+. /home/lv71513/lbaischer/scripts/pt-train-face-relu.sh
+
+chmod +x /home/lv71513/lbaischer/scripts/pt-train-face-fuse.sh
+. /home/lv71513/lbaischer/scripts/pt-train-face-fuse.sh
+
+chmod +x /home/lv71513/lbaischer/scripts/pt-train-face-quantize.sh
+. /home/lv71513/lbaischer/scripts/pt-train-face-quantize.sh
+
+python /home/lv71513/lbaischer/Intuitus-converter/torch_convert_postscale.py \
+--cfg /home/lv71513/lbaischer/Intuitus-converter/torch_yolo/cfg/yolov3tiny-face/yolov3-tiny-fused.cfg \
+--weights /home/lv71513/lbaischer/intuitus/weights_face3/quant_best.pt \
+--param_outpath /home/lv71513/lbaischer/intuitus/parameters/int8_6 \
+--out_weights /home/lv71513/lbaischer/intuitus/weights_face3/post_scale.pt \
+--quantized 2 \
+--img_size 384 
+
+python /home/lv71513/lbaischer/Intuitus-converter/test_torch_yolo.py \
+--cfg /home/lv71513/lbaischer/Intuitus-converter/torch_yolo/cfg/yolov3tiny-face/yolov3-tiny-fused.cfg \
+--wdir /home/lv71513/lbaischer/intuitus/weights_face3 \
+--weights post_scale.pt \
+--data /home/lv71513/lbaischer/intuitus/data/vggface.data \
+--quantized 3 \
+--batch-size 16 \
+--img-size 384 \
+--FPGA False
+
+python /home/lv71513/lbaischer/Intuitus-converter/test_torch_yolo.py \
+--cfg /home/lv71513/lbaischer/Intuitus-converter/torch_yolo/cfg/yolov3tiny-face/yolov3-tiny-fused.cfg \
+--wdir /home/lv71513/lbaischer/intuitus/weights_face3 \
+--weights post_scale.pt \
+--data /home/lv71513/lbaischer/intuitus/data/vggface.data \
+--quantized 3 \
+--batch-size 16 \
+--img-size 384 \
+--FPGA True

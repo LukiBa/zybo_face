@@ -1,0 +1,73 @@
+@startuml
+
+state StateMachine {  
+    [*] --> Init
+    Init --> ImageLoadWorker : Start ImageLoader Thread
+    Init --> FaceDetectWorker : Start FaceDetector Thread
+    Init --> FaceDescriptorWorker : Start FaceDescriptor Process
+    Init : InitialzeFaceDetector
+    Init : InitializeShapePredictor
+    Init : InitializeFaceDescriptorResNet
+    Init : InitializeQueues
+
+    Init --> WaitForFace
+    WaitForFace : DetectorQueue.get()
+    WaitForFace : computePose()
+    WaitForFace --> WaitForFace : Detection invalid [faseNumber != 1 or pose != Straight]
+    WaitForFace --> StartFaceDescriptorComputation : Detection valid [faseNumber == 1 or pose == Straight]
+    StartFaceDescriptorComputation --> LiveCheckLookLeft
+    StartFaceDescriptorComputation: DescriptorInQueue.put()
+    LiveCheckLookLeft : DetectorQueue.get()
+    LiveCheckLookLeft : computePose()
+    LiveCheckLookLeft --> DiscardFaceDescriptor : Detection invalid [faseNumber != 1 or trackingMovement > TrackingTreshold]
+    DiscardFaceDescriptor : faceDetected = False
+    DiscardFaceDescriptor : DescriptorOutQueue.get()
+    DiscardFaceDescriptor : discardDescriptor()
+    DiscardFaceDescriptor --> WaitForFace
+    LiveCheckLookLeft --> LiveCheckLookLeft : Detection valid [rotationAngle < rotationThreshold]
+    LiveCheckLookLeft --> LiveCheckLookRight : Detection valid [rotationAngle > rotationThreshold]
+    LiveCheckLookRight : DetectorQueue.get()
+    LiveCheckLookRight : computePose()
+    LiveCheckLookRight --> DiscardFaceDescriptor : Detection invalid [faseNumber != 1 or trackingMovement > TrackingTreshold]
+    LiveCheckLookRight --> LiveCheckLookRight : Detection valid [rotationAngle > rotationThreshold]
+    LiveCheckLookRight --> GetFaceDescriptor : Detection valid [rotationAngle < rotationThreshold]
+    GetFaceDescriptor --> Tracking : Got face descriptor
+    GetFaceDescriptor --> GetFaceDescriptor : Face descriptor queue empty 
+    GetFaceDescriptor : !DescriptorOutQueue.empty() ? DescriptorOutQueue.get()
+    Tracking --> Tracking : Detection valid [faseNumber == 1 or trackingMovement < TrackingTreshold]]
+    Tracking --> WaitForFace : Detection invalid [faseNumber != 1 or trackingMovement > TrackingTreshold]
+    Tracking : AccessIfFaceDescripotrKnown
+}
+
+state ImageLoadWorker {
+    [*] --> RequestFromUrl
+    RequestFromUrl --> WriteImageToQueue : image received
+    RequestFromUrl: Letterbox image
+    RequestFromUrl: Reshape image tensor for CNN
+    WriteImageToQueue --> RequestFromUrl : put to queue successfull 
+    WriteImageToQueue : ImgQueue.put((orignalImg,cnnInputFmap))
+}
+
+state FaceDetectWorker {
+    [*] --> WaitForImg
+    WaitForImg : ImgQueue.get()
+    WaitForImg --> Yolov3Tiny : got new Image
+    Yolov3Tiny --> NonMaxSurpression
+    NonMaxSurpression --> ShapePredictor : Face detected 
+    NonMaxSurpression --> WriteResultsToDetectorQueue : No face detected 
+    ShapePredictor --> WriteResultsToDetectorQueue 
+    WriteResultsToDetectorQueue --> WaitForImg : write to queue successfull 
+    WriteResultsToDetectorQueue : DetectorQueue.put()
+}
+
+state FaceDescriptorWorker {
+    [*] --> WaitForDetection
+    WaitForDetection : DescriptorInQueue.get()
+    WaitForDetection --> ComputeFaceDescriptor : got new Face
+    ComputeFaceDescriptor --> WriteResultsToDescriptorQueue 
+    WriteResultsToDescriptorQueue --> WaitForDetection : write to queue successfull 
+    WriteResultsToDescriptorQueue : DescriptorOutQueue.put()
+}
+
+
+@enduml

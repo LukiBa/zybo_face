@@ -1,0 +1,20 @@
+#!/bin/bash
+#SBATCH -J pt_yolov3-tiny-416x416-coco-rt-fuse
+#SBATCH -N 1
+#SBATCH --partition gpu_gtx1080single
+#SBATCH --qos gpu_gtx1080single
+#SBATCH --gres gpu:1
+
+module purge
+module load gcc/7.3 python/3.7.4 cuda/10.1.168
+
+source /home/lv71513/lbaischer/nn/bin/activate
+python /home/lv71513/lbaischer/Intuitus-converter/test_torch_yolo.py \
+--cfg /home/lv71513/lbaischer/Intuitus-converter/torch_yolo/cfg/yolov3tiny/yolov3-tiny-quant.cfg \
+--wdir /home/lv71513/lbaischer/intuitus/weights \
+--weights post_scale.pt \
+--data /home/lv71513/lbaischer/intuitus/data/coco2017.data \
+--quantized 3 \
+--batch-size 16 \
+--img-size 416 \
+#--FPGA True 

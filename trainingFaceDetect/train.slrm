@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH -J pt_yolov3-tiny-face-416x416
+#SBATCH -N 1
+#SBATCH --partition gpu_gtx1080single
+#SBATCH --qos gpu_gtx1080single
+#SBATCH --gres gpu:1
+
+module purge
+module load gcc/7.3 python/3.7.4 cuda/10.1.168
+
+source /home/lv71513/lbaischer/nn/bin/activate
+chmod +x /home/lv71513/lbaischer/scripts/pt-train-face-quantize.sh
+. /home/lv71513/lbaischer/scripts/pt-train-face-quantize.sh

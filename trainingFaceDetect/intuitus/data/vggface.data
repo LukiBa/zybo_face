@@ -1,0 +1,5 @@
+classes=1
+train=/home/lv71513/lbaischer/datasets/vgg_face_dataset/train.txt
+valid=/home/lv71513/lbaischer/datasets/vgg_face_dataset/val.txt
+names=/home/lv71513/lbaischer/datasets/vgg_face_dataset/face.names
+instances=empty
