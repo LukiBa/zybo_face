@@ -61,9 +61,6 @@ python zybo/application.py
 15. cd to intuitus.ko location and insert device driver using ``sudo insmod intuitus.ko``
 16. Run application using ``python zybo/application.py``
 
-## Usage Zybo applicaton
-TODO: ADD FACE-COMMADS FOLDER
-
 ## Related Projects: 
 | Project | link |
 | ------ | ------ |
