@@ -25,7 +25,7 @@ def _create_parser():
                         help='maximum rotation angle of the face.')
     parser.add_argument(
         '--cam_url', type=str,
-        default="http://10.0.0.241/zm/cgi-bin/nph-zms?mode=jpeg&monitor=2&maxfps=5&scale=100&user=admin&pass=admin")
+        default="http://10.0.0.241/zm/cgi-bin/nph-zms?mode=jpeg&monitor=2&scale=100&user=admin&pass=admin")
     parser.add_argument('--descriptor_file', type=str,
                         default='./descriptors', help='path to descriptor file')
     parser.add_argument('--intuitusCommandPath', type=str,
@@ -92,7 +92,7 @@ class StateMachine():
 
     def __discardCurrentDescriptor(self) -> None:
         # If Output Queue is empty -> Face descriptor computations are not done yet --> kill the process and restart it
-        self.__name == "processing.."
+        self.__name = "processing.."
         self.__faceDetected = False
         self.__score = 0.0
         if self.__processingDesc:
@@ -287,17 +287,23 @@ def main(opt):
     # Start state machine
     stm = StateMachine(opt.cam_url, opt.intuitusCommandPath, opt.landmarkPredictor, opt.faceDescriptor,
                        opt.descriptor_file, opt.threshold,
-                       maxFps=opt.max_fps, imgSize=imageSize, showLandmarks=True)
+                       maxFps=opt.max_fps, imgSize=imageSize, showLandmarks=False)
 
     # Setup keyboard thread
     keyboardInput = utils.KeyInput()
     keyboardInput()
     key = keyboardInput.getKeyboardInput()
-
+    time = timeit.default_timer()
+    meanFps = 0
     while(True):
         img = stm(key)
+        new_time = timeit.default_timer()
+        meanFps = (meanFps + 1/(new_time-time))/2  
+        time = new_time
+        utils.write_text_top(img, str(meanFps), (0, 127, 0))
         fb.show(img, fbOffsetCenter)
-
+        print("Plot: {}".format((timeit.default_timer()-time)*1000))
+        
         key = keyboardInput.getKeyboardInput()
         if key == 'q':
             break

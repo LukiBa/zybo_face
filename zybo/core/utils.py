@@ -13,6 +13,7 @@ import multiprocessing
 import time
 import timeit
 
+
 def rect_to_np(rect, dtpye=np.int32):
     x1 = rect.left()
     y1 = rect.top()
@@ -41,6 +42,44 @@ def shape_to_np(shape, dtype=np.int32):
         coords[i] = (shape.part(i).x, shape.part(i).y)
     # return the list of (x, y)-coordinates
     return coords
+
+
+def get_identification_vector(shape, img_width, dtype=np.float32):
+    shape = shape.astype(dtype)
+    ear_distance = np.linalg.norm(shape[1-1, :]-shape[17-1, :])
+    inner_eye_distance = np.linalg.norm(shape[40-1, :]-shape[43-1, :])
+    outer_eye_distance = np.linalg.norm(shape[37-1, :]-shape[46-1, :])
+    nose_width = np.linalg.norm(shape[32-1, :]-shape[36-1, :])
+
+    nose_to_eye_distance = np.mean([np.linalg.norm(shape[37-1, :]-shape[31-1, :]),
+                                    np.linalg.norm(shape[46-1, :]-shape[31-1, :])])
+
+    nose_height = np.linalg.norm(shape[28-1, :]-shape[31-1, :])
+    nose_to_mouth_distance = np.linalg.norm(shape[34-1, :]-shape[52-1, :])
+    chin_height = np.linalg.norm(shape[58-1, :]-shape[9-1, :])
+
+    average_upper_lip_width = np.mean([np.linalg.norm(shape[51-1, :]-shape[62-1, :]),
+                                       np.linalg.norm(shape[52-1, :]-shape[63-1, :]),
+                                       np.linalg.norm(shape[53-1, :]-shape[64-1, :])])
+    average_lower_lip_width = np.mean([np.linalg.norm(shape[68-1, :]-shape[59-1, :]),
+                                       np.linalg.norm(shape[67-1, :]-shape[58-1, :]),
+                                       np.linalg.norm(shape[66-1, :]-shape[57-1, :])])
+
+    identification_vector = np.array([outer_eye_distance/inner_eye_distance,
+                                      nose_width/inner_eye_distance,
+                                      ear_distance/inner_eye_distance,
+                                      nose_height/nose_to_mouth_distance,
+                                      nose_to_eye_distance/nose_to_mouth_distance,
+                                      chin_height/nose_to_mouth_distance,
+                                      average_upper_lip_width/nose_to_mouth_distance,
+                                      average_lower_lip_width/nose_to_mouth_distance
+                                      ], dtype=dtype)
+
+    paramters = np.array([ear_distance, inner_eye_distance, outer_eye_distance, nose_width,
+                          nose_to_eye_distance, nose_height, nose_to_mouth_distance,
+                          chin_height, average_upper_lip_width, average_lower_lip_width])
+
+    return identification_vector, paramters
 
 
 def letterbox(img, new_shape=(416, 416), color=(114, 114, 114),
@@ -75,9 +114,10 @@ def letterbox(img, new_shape=(416, 416), color=(114, 114, 114),
         img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
-    img = cv2.copyMakeBorder(img, top, bottom, left, right, 
+    img = cv2.copyMakeBorder(img, top, bottom, left, right,
                              cv2.BORDER_CONSTANT, value=color)  # add border
     return img, ratio, (dw, dh)
+
 
 def write_text_bottom(img, outtext: str, color=(0, 0, 255)):
     (tw, th), _ = cv2.getTextSize(outtext, cv2.FONT_HERSHEY_SIMPLEX, 0.3, 1)
@@ -90,14 +130,17 @@ def write_text_bottom(img, outtext: str, color=(0, 0, 255)):
 
 def write_text_top(img, outtext: str, color=(0, 0, 255)):
     (tw, th), _ = cv2.getTextSize(outtext, cv2.FONT_HERSHEY_SIMPLEX, 0.3, 1)
-    img = cv2.rectangle(img, (0, 20), (0 + tw, img.shape[0]), color, -1)
+    img = cv2.rectangle(img, (0, 20), (0 + tw, 0), color, -1)
     textColor = (0, 0, 0) if max(color) > 127 else (255, 255, 255)
-    img = cv2.putText(img, outtext, (0, 5), cv2.FONT_HERSHEY_SIMPLEX,
+    img = cv2.putText(img, outtext, (0, 15), cv2.FONT_HERSHEY_SIMPLEX,
                       0.3, textColor, 1)
     return
 
+
 def get_angle(a, b):
-    return np.arccos(np.clip(np.dot(a,b)/np.sqrt(sum(a**2)*sum(b**2)),-1.0,1.0))*180/np.pi*np.sign(a[0])
+    return np.arccos(np.clip(np.dot(a, b) / np.sqrt(sum(a ** 2) * sum(b ** 2)),
+                             -1.0, 1.0)) * 180 / np.pi * np.sign(a[0])
+
 
 def drawBoxAndName(image, bbox, name, score):
     fontScale = 0.3
@@ -112,8 +155,9 @@ def drawBoxAndName(image, bbox, name, score):
     c3 = (c1[0] + t_size[0], c1[1] - t_size[1] - 3)
     cv2.rectangle(image, c1, (np.float32(c3[0]), np.float32(c3[1])), bbox_color, -1)  # filled
     cv2.putText(image, bbox_mess, (c1[0], np.float32(c1[1] - 2)), cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale, (0, 0, 0),1, lineType=cv2.LINE_AA)
+                fontScale, (0, 0, 0), 1, lineType=cv2.LINE_AA)
     return image
+
 
 class Descriptor_FileHandler():
     def __init__(self, file_path, threshold=0.6) -> None:
@@ -153,7 +197,8 @@ class Descriptor_FileHandler():
             new_line = ','.join(new_line) + "\n"
             descriptor_file.write(new_line)
         return True, "[Info]: Person successfully registered."
-    
+
+
 class Worker():
     def __init__(self):
         self.thread = None
@@ -180,16 +225,22 @@ class Image_loader(Worker):
 
     def _process(self):
         while(True):
-            #print(self.__class__.__name__ + ": fetching image.")
+            # print(self.__class__.__name__ + ": fetching image.")
+            # time = timeit.default_timer()
             frame = self.ipCamRead()
             img, ratio, pad = letterbox(frame, (self.image_size, self.image_size),
-                                               auto=False, scaleup=True)
-            b,g,r = cv2.split(img)
-            fmapIn = np.stack([r,g,b]).astype(np.uint8)    
-            queueIn = (img,fmapIn)        
+                                        auto=False, scaleup=True)
+            # loadTime = timeit.default_timer()
+            b, g, r = cv2.split(img)
+            fmapIn = np.stack([r, g, b]).astype(np.uint8)
+            queueIn = (img, fmapIn)
             self.out_Queue.put(queueIn)
-            #print(self.__class__.__name__ + ": done.")
-            
+            # end = timeit.default_timer()
+            # print("Ges: {}, LoadImg {}, PrepareFmap : {}".format((end-time)*1000,
+            #                                                      (loadTime-time)*1000,
+            #                                                      (end-loadTime)*1000))
+            # print(self.__class__.__name__ + ": done.")
+
     def ipCamRead(self):
         r = requests.get(self.url, stream=True)
         if(r.status_code == 200):
@@ -211,72 +262,68 @@ class Detector(Worker):
         self.in_Queue = in_Queue
         self.out_Queue = out_Queue
         self.detector = detector
-        #self.detector = dlib.get_frontal_face_detector()
+        # self.detector = dlib.get_frontal_face_detector()
         self.predictor = predictor
 
     def _process(self):
         while(True):
-            #print(self.__class__.__name__ + ": detecting faces.")
-            img,fmapIn = self.in_Queue.get()
+            # print(self.__class__.__name__ + ": detecting faces.")
+            # time = timeit.default_timer()
+            img, fmapIn = self.in_Queue.get()
+            # cnn_start = timeit.default_timer()
             bboxes = self.detector(fmapIn)
+            # cnn_end = timeit.default_timer()
             shapes = []
             for i in range(bboxes.shape[0]):
-                left, top, right, bottom = bboxes[i,:4].astype(np.int32)
+                left, top, right, bottom = bboxes[i, :4].astype(np.int32)
                 rect = dlib.rectangle(left, top, right, bottom)
-                shapes.append(self.predictor(img,rect) )              
+                shapes.append(self.predictor(img, rect))
 
             faces = (bboxes, shapes, img)
             self.out_Queue.put(faces)
-            #print(self.__class__.__name__ + ": done.")
-
-    # def _process(self):
-    #     while(True):
-    #         #print(self.__class__.__name__ + ": detecting faces.")
-    #         img,fmapIn = self.in_Queue.get()
-    #         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    #         rects = self.detector(gray, 1)
-    #         shapes = []
-    #         rect_np = []
-    #         for rect in rects:
-    #             shapes.append(self.predictor(gray, rect))
-    #             rect_np.append(rect_to_np(rect, dtpye=np.int32))
-
-    #         rect_np = np.stack(rect_np)
-    #         faces = (rect_np, shapes, img)
-    #         self.out_Queue.put(faces)
+            # end = timeit.default_timer()
+            # print("Ges: {}, Processing {}, CNN : {}, Landmarks: {}".format((end-time)*1000,
+            #                                                                (end-cnn_start)*1000,
+            #                                                                (cnn_end-cnn_start)*1000,
+            #                                                                (end-cnn_end)*1000))
+            # print(self.__class__.__name__ + ": done.")
 
 
 class KeyInput(Worker):
-    def __init__(self, maxQueueSize : int = 1):
+    def __init__(self, maxQueueSize: int = 1):
         super().__init__()
         self.queue = queue.Queue(maxsize=maxQueueSize)
         self.key = '0'
+
     def _process(self):
         while(True):
             inString = input("End Application: [q]").strip()
             print("New Keybord input: " + inString)
             self.queue.put(inString)
-    def getKeyboardInput(self,block=False,timeout=None) -> str:
-        try: 
-            self.key = self.queue.get(block,timeout)
+
+    def getKeyboardInput(self, block=False, timeout=None) -> str:
+        try:
+            self.key = self.queue.get(block, timeout)
         except:
             pass
         return self.key
 
 
-
-def computeFaceDescriptors(queueIn: multiprocessing.Queue, queueOut: multiprocessing.Queue, facerecPath):
+def computeFaceDescriptors(
+        queueIn: multiprocessing.Queue, queueOut: multiprocessing.Queue, facerecPath):
     facerec = dlib.face_recognition_model_v1(facerecPath)
     while(True):
         shapes, img = queueIn.get()
-        #print("start processing face descriptor")
-        #time = timeit.default_timer()
+        # print("start processing face descriptor")
+        time = timeit.default_timer()
         face_descriptors = []
         for shape in shapes:
             face_descriptors.append(
                 facerec.compute_face_descriptor(img, shape))
-        #print("Face decriptor processing done. Took {} s".format(timeit.default_timer()-time))
+        print("Desc: {}".format((timeit.default_timer()-time)*1000))
+        # print("Face decriptor processing done. Took {} s".format(timeit.default_timer()-time))
         queueOut.put(face_descriptors)
+
 
 class FaceDecriptorProcess():
     def __init__(self, queueIn: multiprocessing.Queue, queueOut: multiprocessing.Queue, facerecPath):
@@ -292,4 +339,4 @@ class FaceDecriptorProcess():
         self.process.start()
 
     def kill(self):
-        self.process.terminate()    
+        self.process.terminate()
